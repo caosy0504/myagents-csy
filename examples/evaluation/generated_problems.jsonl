@@ -1,0 +1,2 @@
+{"problem_id":"generated-1","problem":"What is the remainder when 23 is divided by 6?","answer":"5","solution":"23 = 3×6 + 5, so the remainder is 5.","source":"local_fixture","verification_expression":"23 - 3 * 6"}
+{"problem_id":"generated-2","problem":"A number tripled is 27. What is the number?","answer":"9","solution":"Divide 27 by 3 to obtain 9.","source":"local_fixture","verification_expression":"27 / 3"}

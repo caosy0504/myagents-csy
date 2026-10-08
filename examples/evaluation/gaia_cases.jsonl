@@ -1,0 +1,3 @@
+{"task_id":"local-number","Question":"What is 6 plus 7? Give only the final number.","Level":1,"Final answer":"13"}
+{"task_id":"local-list","Question":"List 2 and 3, separated by a comma.","Level":2,"Final answer":"2, 3"}
+{"task_id":"local-text","Question":"What language is this project written in?","Level":3,"Final answer":"Python"}

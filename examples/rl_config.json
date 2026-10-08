@@ -1,0 +1,32 @@
+{
+  "data": {
+    "source": "jsonl",
+    "train_file": "rl_data/train.jsonl",
+    "validation_file": "rl_data/validation.jsonl",
+    "test_file": "rl_data/test.jsonl"
+  },
+  "model_name": "Qwen/Qwen3-0.6B",
+  "output_root": "../models/chapter11-demo",
+  "seed": 42,
+  "sft": {
+    "max_steps": 1,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 1,
+    "learning_rate": 2e-5,
+    "use_lora": true
+  },
+  "grpo": {
+    "max_steps": 1,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "num_generations": 4,
+    "max_completion_length": 64,
+    "learning_rate": 1e-5,
+    "use_lora": true
+  },
+  "evaluation": {
+    "max_samples": 2,
+    "max_new_tokens": 64,
+    "device": "cpu"
+  }
+}

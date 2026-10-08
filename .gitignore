@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+build/
+dist/
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+knowledge_base/
+rag_exports/
+
+# Personal learning notes: keep local, do not publish by default.
+notes/
+models/
+training_runs/
+evaluation_runs/
+
+# Local, beginner-friendly guide. The public project uses README.md.
+/个人使用说明.md

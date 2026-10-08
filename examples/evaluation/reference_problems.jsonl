@@ -1,0 +1,2 @@
+{"problem_id":"reference-1","problem":"What is the remainder when 17 is divided by 5?","answer":"2","solution":"17 = 3×5 + 2, so the remainder is 2.","source":"local_fixture"}
+{"problem_id":"reference-2","problem":"A number doubled is 24. What is the number?","answer":"12","solution":"Divide 24 by 2 to obtain 12.","source":"local_fixture"}

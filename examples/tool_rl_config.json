@@ -1,0 +1,28 @@
+{
+  "data": {
+    "train_file": "tool_rl_data/train.jsonl",
+    "validation_file": "tool_rl_data/validation.jsonl",
+    "test_file": "tool_rl_data/test.jsonl"
+  },
+  "model_name": "Qwen/Qwen3-0.6B",
+  "output_root": "../models/chapter11-tool-demo",
+  "seed": 42,
+  "sft": {
+    "max_steps": 1,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 1,
+    "learning_rate": 2e-5,
+    "max_length": 512,
+    "use_lora": true
+  },
+  "grpo": {
+    "max_steps": 1,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "num_generations": 4,
+    "max_completion_length": 128,
+    "max_tool_calling_iterations": 3,
+    "learning_rate": 1e-5,
+    "use_lora": true
+  }
+}

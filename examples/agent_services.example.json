@@ -1,0 +1,11 @@
+[
+  {
+    "service_id": "local_echo",
+    "name": "Local A2A Echo Agent",
+    "service_type": "assistant",
+    "capabilities": ["answer", "echo"],
+    "endpoint": "http://127.0.0.1:6001",
+    "load": 0.1,
+    "cost": 0.0
+  }
+]

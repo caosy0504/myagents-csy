@@ -1,0 +1,8 @@
+{"a":2,"b":3,"operation":"add"}
+{"a":8,"b":5,"operation":"subtract"}
+{"a":4,"b":6,"operation":"multiply"}
+{"a":12,"b":7,"operation":"add"}
+{"a":15,"b":9,"operation":"subtract"}
+{"a":3,"b":7,"operation":"multiply"}
+{"a":21,"b":11,"operation":"add"}
+{"a":17,"b":6,"operation":"subtract"}

@@ -1,0 +1,4 @@
+{"id":"clarify-before-change","question":"Ask me which day, then schedule the meeting for that day.","initial_state":{"meeting":"unset"},"desired_state":{"meeting":"Monday"},"expected_answer":"done","clarification":"Monday","require_clarification":true}
+{"id":"recover-transient-failure","question":"Read the status, retry if the API fails, then mark it ready.","initial_state":{"status":"unset"},"desired_state":{"status":"ready"},"expected_answer":"done","fail_once":["get_state"]}
+{"id":"time-dependent-event","question":"Wait five minutes, then report the alarm state.","initial_state":{"alarm":"off"},"desired_state":{"alarm":"on"},"expected_answer":"on","events":[{"at_minute":5,"updates":{"alarm":"on"}}]}
+{"id":"consult-peer","question":"Ask the peer for a decision, then record it.","initial_state":{"decision":"unset"},"desired_state":{"decision":"go"},"expected_answer":"done","peer_reply":"go","require_peer":true}
