@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from .data import CITIES
 from .planner import PlanGenerationError, TravelRequest, build_plan_from_selection, create_plan
+from .research import ResearchError, ResearchUnavailableError, tavily_available
 
 INDEX = Path(__file__).with_name("index.html")
 STATIC_FILES = {
@@ -47,9 +48,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(204)
             self.end_headers()
         elif self.path == "/api/cities":
-            self._json(200, {"cities": list(CITIES)})
+            self._json(200, {"cities": list(CITIES), "tavily_available": tavily_available()})
         elif self.path == "/api/health":
-            self._json(200, {"status": "ready", "source": "local mock data", "model": "Ollama qwen2.5:7b"})
+            self._json(200, {
+                "status": "ready", "source": "local mock data",
+                "model": "Ollama qwen2.5:7b", "tavily_available": tavily_available(),
+            })
         else:
             self._json(404, {"error": "未找到页面"})
 
@@ -79,10 +83,19 @@ class Handler(BaseHTTPRequestHandler):
                 attempts = payload.get("model_attempts", 0)
                 if not isinstance(attempts, int) or not 0 <= attempts <= 2:
                     raise ValueError("模型调用次数无效")
+                research = payload.get("research")
+                if request.web_research and research is None:
+                    raise ValueError("联网行程缺少原始搜索资料")
                 plan = build_plan_from_selection(
                     request, days, tips, model_attempts=attempts,
-                    allow_empty_days=True, edited=True,
+                    allow_empty_days=True, edited=True, research=research,
                 )
+        except ResearchUnavailableError as exc:
+            self._json(400, {"error": str(exc)})
+            return
+        except ResearchError as exc:
+            self._json(502, {"error": str(exc)})
+            return
         except PlanGenerationError as exc:
             self._json(502, {"error": str(exc)})
             return

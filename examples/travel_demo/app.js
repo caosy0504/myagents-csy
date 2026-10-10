@@ -1,4 +1,4 @@
-const DRAFT_KEY = 'myagents-csy-travel-demo-v2';
+const DRAFT_KEY = 'myagents-csy-travel-demo-v3';
 const PREFERENCES = ['历史文化', '自然风光', '博物馆', '城市漫步', '美食购物', '艺术街区'];
 const DAY_COLORS = ['#248866', '#d18d4d', '#597cb3'];
 
@@ -9,6 +9,7 @@ const errorBox = document.getElementById('error');
 const formStatus = document.getElementById('form-status');
 const generateButton = document.getElementById('generate');
 const chipContainer = document.getElementById('preference-chips');
+const citySelect = document.getElementById('city');
 let selectedPreferences = new Set(['历史文化', '美食购物']);
 let plan = null;
 let editing = false;
@@ -81,6 +82,28 @@ function defaultDate() {
   document.getElementById('start-date').value = `${date.getFullYear()}-${month}-${day}`;
 }
 
+async function loadCities() {
+  try {
+    const response = await fetch('/api/cities');
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!Array.isArray(data.cities) || !data.cities.length) return;
+    const selected = citySelect.value;
+    citySelect.replaceChildren();
+    data.cities.sort((a, b) => a.localeCompare(b, 'zh-CN'))
+      .forEach(city => citySelect.append(new Option(city, city)));
+    citySelect.value = data.cities.includes(selected) ? selected : data.cities[0];
+    document.getElementById('city-count').textContent = `◌ ${data.cities.length} 座演示城市`;
+    const researchInput = document.getElementById('web-research');
+    researchInput.disabled = !data.tavily_available;
+    document.getElementById('research-help').textContent = data.tavily_available
+      ? '仅勾选后才联网搜索；一次基础搜索通常消耗 1 个 Tavily API credit。'
+      : '如需联网搜索，请先在本项目 .env 填写 TAVILY_API_KEY 并重启服务。';
+  } catch (error) {
+    // Keep the three HTML fallback options if the local service is unavailable.
+  }
+}
+
 function requestFromForm() {
   const rawBudget = document.getElementById('budget-limit').value.trim();
   return {
@@ -92,6 +115,7 @@ function requestFromForm() {
     accommodation: document.getElementById('hotel').value,
     pace: document.getElementById('pace').value,
     budget_limit: rawBudget ? Number(rawBudget) : null,
+    web_research: document.getElementById('web-research').checked,
     notes: document.getElementById('notes').value.trim(),
   };
 }
@@ -104,6 +128,7 @@ function formFromRequest(request) {
   document.getElementById('hotel').value = request.accommodation;
   document.getElementById('pace').value = request.pace;
   document.getElementById('budget-limit').value = request.budget_limit ?? '';
+  document.getElementById('web-research').checked = Boolean(request.web_research);
   document.getElementById('notes').value = request.notes;
   selectedPreferences = new Set(request.preferences);
   renderPreferenceChips();
@@ -114,7 +139,9 @@ form.addEventListener('submit', async event => {
   clearError();
   generateButton.disabled = true;
   generateButton.firstChild.textContent = '本地模型正在规划… ';
-  formStatus.textContent = '正在读取演示数据并请求本机 Ollama，首次生成可能需要几十秒。';
+  formStatus.textContent = document.getElementById('web-research').checked
+    ? '正在调用 Tavily 搜索和本机 Ollama；本次搜索会消耗 Tavily API credit。'
+    : '正在读取演示数据并请求本机 Ollama，首次生成可能需要几十秒。';
   try {
     plan = await api('/api/plan', requestFromForm());
     localStorage.setItem(DRAFT_KEY, JSON.stringify(plan));
@@ -173,7 +200,7 @@ function renderOverview() {
     el('h2', '', `${plan.city} · ${plan.days.length} 日行程`),
     el('div', 'sub', `${dateText(plan.start_date)} — ${dateText(plan.end_date)} · ${plan.model} · ${plan.request.pace}节奏`),
   );
-  top.append(heading, el('span', 'badge', '本地模拟数据'));
+  top.append(heading, el('span', 'badge', plan.research ? '联网来源 + 模拟数据' : '本地模拟数据'));
   card.append(top);
 
   const metrics = el('div', 'metrics');
@@ -281,6 +308,7 @@ async function edit(mutator) {
     plan = await api('/api/rebuild', {
       request: plan.request, days, tips: plan.tips,
       model_attempts: plan.workflow.model_attempts,
+      research: plan.research,
     });
     localStorage.setItem(DRAFT_KEY, JSON.stringify(plan));
     render();
@@ -395,6 +423,24 @@ function renderNotes() {
   details.append(list, el('p', 'workflow-tools',
     `工具：${plan.workflow.tools.join('、')} · 本地模型调用 ${plan.workflow.model_attempts} 次。编辑后只重新计算，不再调用模型。`));
   card.append(details, el('p', 'small-note', plan.data_notice));
+  if (plan.research && Array.isArray(plan.research.sources)) {
+    const sources = el('div', 'research-sources');
+    sources.append(el('h3', '', 'Tavily 搜索参考来源'));
+    plan.research.sources.forEach((source, index) => {
+      try {
+        const url = new URL(source.url);
+        if (url.protocol !== 'https:') return;
+        const item = document.createElement('a');
+        item.href = url.href;
+        item.target = '_blank';
+        item.rel = 'noopener noreferrer';
+        item.textContent = `${index + 1}. ${source.title}`;
+        sources.append(item);
+      } catch (error) { /* Ignore a malformed saved source URL. */ }
+    });
+    sources.append(el('p', 'small-note', '搜索摘要只用于辅助在本地景点目录中选点；请以景区官方信息核对实时价格与开放情况。'));
+    card.append(sources);
+  }
   return card;
 }
 
@@ -412,7 +458,7 @@ defaultDate();
 renderPreferenceChips();
 try {
   const draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
-  if (draft && draft.schema_version === 2 && draft.request && Array.isArray(draft.days)) {
+  if (draft && draft.schema_version === 3 && draft.request && Array.isArray(draft.days)) {
     plan = draft;
     formFromRequest(draft.request);
     render();
@@ -421,3 +467,4 @@ try {
 } catch (error) {
   localStorage.removeItem(DRAFT_KEY);
 }
+loadCities();

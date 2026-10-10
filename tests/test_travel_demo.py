@@ -2,7 +2,9 @@
 
 import pytest
 
-from examples.travel_demo.planner import TravelRequest, build_plan_from_selection, create_plan
+from examples.travel_demo.data import CITIES
+from examples.travel_demo.planner import TravelRequest, _json_object, build_plan_from_selection, create_plan
+from examples.travel_demo import research
 
 
 class FakeLLM:
@@ -98,3 +100,72 @@ def test_relaxed_pace_rejects_three_attractions_from_model():
     invalid = '{"days":[{"attractions":["hz_westlake","hz_lingyin","hz_xixi"],"theme":"湖山"}]}'
     with pytest.raises(ValueError, match="2 至 2 个景点"):
         create_plan(request, FakeLLM(invalid, invalid))
+
+
+def test_every_offline_city_has_enough_unique_attractions_for_three_dense_days():
+    assert len(CITIES) == 29
+    for city, data in CITIES.items():
+        ids = [attraction["id"] for attraction in data["attractions"]]
+        assert len(ids) >= 9, city
+        assert len(ids) == len(set(ids)), city
+        selection = [
+            {"attractions": ids[index:index + 3], "theme": f"第{index // 3 + 1}天"}
+            for index in (0, 3, 6)
+        ]
+        plan = build_plan_from_selection(
+            TravelRequest(city=city, start_date="2026-10-15", days=3, pace="紧凑"),
+            selection,
+            "模拟建议",
+        )
+        assert len(plan["days"]) == 3
+        assert sum(len(day["attractions"]) for day in plan["days"]) == 9
+
+
+def test_tavily_is_opt_in_and_one_basic_search_is_cached():
+    calls = []
+
+    class FakeTavily:
+        def __init__(self, api_key):
+            assert api_key == "test-key"
+
+        def search(self, **kwargs):
+            calls.append(kwargs)
+            return {"results": [
+                {"title": "示例旅游指南", "url": "https://example.org/guide", "content": "示例城市的景点资料"},
+                {"title": "无效来源", "url": "http://example.org/unsafe", "content": "不采用"},
+            ]}
+
+    first = research.search_city("测试城", ["自然风光"], api_key="test-key", client_factory=FakeTavily)
+    second = research.search_city("测试城", ["自然风光"], api_key="test-key", client_factory=FakeTavily)
+
+    assert len(calls) == 1
+    assert calls[0]["search_depth"] == "basic"
+    assert calls[0]["max_results"] == 5
+    assert first["sources"][0]["url"] == "https://example.org/guide"
+    assert len(first["sources"]) == 1
+    assert second["cached"] is True
+
+
+def test_web_research_keeps_sources_and_uses_existing_city_catalog():
+    request = TravelRequest(city="北京", start_date="2026-10-15", days=1, web_research=True)
+    source = {
+        "query": "北京 旅游景点", "sources": [
+            {"title": "北京景点", "url": "https://example.org/beijing", "snippet": "故宫和景山公园"},
+        ], "fetched_at": "2026-10-10T00:00:00+00:00", "cached": False,
+    }
+    llm = FakeLLM('{"days":[{"attractions":["bj_palace","bj_jingshan"],"theme":"古城"}],"tips":"模拟建议"}')
+    plan = create_plan(request, llm, researcher=lambda city, prefs: source)
+    selection = [{"attractions": [item["id"] for item in plan["days"][0]["attractions"]], "theme": "古城"}]
+    rebuilt = build_plan_from_selection(
+        request, selection, plan["tips"], research=plan["research"], edited=True,
+    )
+
+    assert plan["research"]["sources"][0]["url"] == "https://example.org/beijing"
+    assert "tavily_search" in plan["workflow"]["tools"]
+    assert rebuilt["research"] == plan["research"]
+    assert llm.calls == 1
+
+
+def test_model_json_parser_accepts_one_object_with_trailing_explanation():
+    response = '```json\n{"days": [], "tips": "ok"}\n```\n补充说明'
+    assert _json_object(response)["tips"] == "ok"

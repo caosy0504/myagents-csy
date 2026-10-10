@@ -50,6 +50,10 @@ button { cursor: pointer; }
 .field textarea { min-height: 77px; resize: vertical; }
 .field :is(input, select, textarea):focus { border-color: #4caa79; box-shadow: 0 0 0 3px #4caa7925; }
 .field-help { font-size: 11px; color: #86988a; margin: 7px 0 0; line-height: 1.5; }
+.research-field { padding: 10px 11px; border: 1px solid #dfeadf; background: #f6faf4; border-radius: 10px; }
+.checkbox-row { display: flex !important; align-items: center; gap: 8px; margin: 0 !important; cursor: pointer; }
+.checkbox-row input { width: 15px !important; min-height: 15px !important; height: 15px; padding: 0; accent-color: #226f54; }
+.research-field .field-help { margin: 6px 0 0 23px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
 .preference-chips { display: flex; flex-wrap: wrap; gap: 7px; }
 .pref-chip { padding: 7px 9px; border-radius: 8px; border: 1px solid #dce8df; background: #fbfdfb; font-size: 11px; color: #60806c; }
@@ -96,6 +100,9 @@ button { cursor: pointer; }
 .tip-box { background: #f2f8f1; border-radius: 10px; padding: 13px 15px; color: #47674e; font-size: 12px; line-height: 1.8; white-space: pre-wrap; }
 details { margin-top: 14px; } details summary { cursor: pointer; color: #326c51; font-size: 12px; font-weight: 750; }
 .workflow-list { margin: 8px 0 0; padding-left: 21px; color: #627d69; font-size: 12px; line-height: 1.95; }.workflow-tools { color: #8b9a8d; font-size: 11px; margin-top: 11px; }
+.research-sources { border-top: 1px solid #e6eee6; margin-top: 17px; padding-top: 14px; }
+.research-sources h3 { font-size: 13px; margin: 0 0 8px; }
+.research-sources a { display: block; color: #286d54; font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; margin: 4px 0; }
 
 @media (max-width: 1000px) { .hero-art { display: none; }.layout { grid-template-columns: 310px minmax(0, 1fr); }.planner-panel { padding: 20px; } }
 @media (max-width: 780px) { .shell { padding: 14px 12px 45px; }.hero { border-radius: 18px; min-height: 0; }.hero-copy { padding: 27px 24px; }.layout { grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }.planner-panel { position: static; }.empty-state { min-height: 370px; }.map-layout { grid-template-columns: 1fr; } }

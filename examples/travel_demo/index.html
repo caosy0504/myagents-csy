@@ -17,7 +17,7 @@
         <p>让本机 Ollama 模型在已知景点中挑选路线，再用确定性代码安排时间、计算预算。全过程只读取本地演示数据。</p>
         <div class="hero-tags">
           <span>✦ Ollama qwen2.5:7b</span>
-          <span>◌ 3 座城市</span>
+          <span id="city-count">◌ 国内热门目的地</span>
           <span>⌁ 可编辑行程</span>
           <span>▧ PDF / JSON 导出</span>
         </div>
@@ -47,12 +47,16 @@
             <div class="field"><label for="transport">交通方式</label><select id="transport"><option>公共交通</option><option>打车</option></select></div>
             <div class="field"><label for="hotel">住宿偏好</label><select id="hotel"><option>舒适型</option><option>经济型</option></select></div>
           </div>
+          <div class="field research-field">
+            <label class="checkbox-row" for="web-research"><input id="web-research" type="checkbox"><span>使用 Tavily 搜索辅助选点</span></label>
+            <p id="research-help" class="field-help">仅勾选后才联网搜索；搜索会消耗你的 Tavily API credit。</p>
+          </div>
           <div class="field"><label for="notes">补充要求</label><textarea id="notes" maxlength="300" placeholder="例如：优先博物馆，下午留点休息时间"></textarea></div>
           <button id="generate" class="primary-button" type="submit">生成演示行程 <span aria-hidden="true">↗</span></button>
           <p id="form-status" class="form-status" aria-live="polite"></p>
         </form>
         <div id="error" class="error" role="alert" hidden></div>
-        <div class="privacy-note"><strong>本地演示说明</strong><p>景点资料、示意位置、酒店、票价、天气与时间都不是实时信息。程序固定连接本机 Ollama，不调用高德或 Unsplash。</p></div>
+        <div class="privacy-note"><strong>演示数据说明</strong><p>景点目录、示意位置、酒店、票价、天气与时间都不是实时信息。模型固定连接本机 Ollama；只有勾选联网选项才会调用 Tavily，不调用高德或 Unsplash。</p></div>
       </aside>
 
       <main class="main-panel">

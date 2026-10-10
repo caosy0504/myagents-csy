@@ -1,5 +1,7 @@
 """Illustrative data for the local travel demo; none of it is live travel data."""
 
+from .popular_cities import POPULAR_ATTRACTIONS
+
 CITIES = {
     "北京": {
         "attractions": [
@@ -59,3 +61,44 @@ CITIES = {
         "temperature": 23,
     },
 }
+
+
+def _category(name: str) -> str:
+    """Assign a broad demo tag; this is not a verified POI classification."""
+    if any(word in name for word in ("博物馆", "博物院", "美术馆")):
+        return "博物馆"
+    if "大熊猫" in name:
+        return "自然风光"
+    if any(word in name for word in ("公园", "山", "湖", "海", "江", "湾", "岛", "峡", "雪", "洞", "滩", "湿地")):
+        return "自然风光"
+    if any(word in name for word in ("寺", "祠", "宫", "塔", "古城", "古镇", "城墙", "遗址", "石窟", "陵", "草堂", "书院", "故居", "文殊院")):
+        return "历史文化"
+    if any(word in name for word in ("街", "巷", "夜市", "路", "大巴扎", "锦里")):
+        return "城市漫步"
+    return "城市地标"
+
+
+for city_index, (city, names) in enumerate(POPULAR_ATTRACTIONS.items(), start=1):
+    # All numeric fields below are placeholders for the offline interaction demo.
+    attractions = []
+    for index, name in enumerate(names):
+        category = _category(name)
+        attractions.append({
+            "id": f"city{city_index:02d}_{index + 1:02d}",
+            "name": name,
+            "category": category,
+            "minutes": (90, 120, 150)[index % 3],
+            "ticket": {"博物馆": 0, "城市漫步": 0, "自然风光": 30,
+                       "历史文化": 40, "城市地标": 20}[category],
+            "x": 19 + (index % 3) * 29 + (index // 3) * 3,
+            "y": 18 + (index // 3) * 30 + (index % 3) * 2,
+        })
+    CITIES[city] = {
+        "attractions": attractions,
+        "hotels": [
+            {"name": f"{city}漫游酒店（模拟）", "type": "舒适型", "nightly": 380},
+            {"name": f"{city}轻旅客栈（模拟）", "type": "经济型", "nightly": 240},
+        ],
+        "meals": [f"{city}早餐（模拟）", f"{city}午餐（模拟）", f"{city}晚餐（模拟）"],
+        "temperature": 22,
+    }

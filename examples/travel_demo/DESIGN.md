@@ -1,14 +1,15 @@
 # 第 13 章本地旅行助手实战
 
-这个案例把 MyAgents CSY 的 `SimpleAgent`、`MyAgentsLLM` 和 `ToolRegistry` 组合成一个可操作的网页应用。模型固定连接本机 Ollama `qwen2.5:7b`；没有外部地图、图片、天气或云端模型请求。
+这个案例把 MyAgents CSY 的 `SimpleAgent`、`MyAgentsLLM` 和 `ToolRegistry` 组合成一个可操作的网页应用。模型固定连接本机 Ollama `qwen2.5:7b`。默认完全离线；用户勾选联网开关后才调用 Tavily 搜索一次，并展示来源链接。没有外部地图、图片、天气或云端模型请求。
 
 ## 功能
 
-- 北京、上海、杭州，1–3 日行程；支持偏好、节奏、交通、住宿、补充要求与预算上限。轻松节奏每天 2 个景点、标准 2–3 个、紧凑 3 个。
+- 29 座国内热门目的地的演示目录，支持 1–3 日行程与偏好、节奏、交通、住宿、补充要求和预算上限。轻松节奏每天 2 个景点、标准 2–3 个、紧凑 3 个。
 - 模型只选择模拟景点 ID、每日主题和文字建议；程序验证城市、天数、景点 ID、每日数量及跨日重复。
 - Python 代码根据模拟时长生成早餐、景点、午餐、晚餐时间线；根据模拟票价、住宿、餐饮、交通计算每日及总预算。超预算时只提示差额。
 - 浏览器显示 SVG 景点分布示意图、模拟天气、流程说明；支持添加、移除、排序、跨日移动景点。编辑调用 `/api/rebuild`，不再调用 Ollama。
 - 当前浏览器自动保存草稿；可导出 JSON 或通过打印保存为 PDF。
+- 可选 Tavily 辅助搜索：仅在用户勾选时查询当前城市与偏好，保留最多 5 条来源；本地模型可参考摘要在预设景点中选点，不能凭搜索摘要生成票价、天气或地图坐标。相同查询在服务运行期间缓存 1 小时，编辑行程不重复搜索。
 
 ## 数据流
 
@@ -18,6 +19,8 @@ flowchart LR
     API --> REQ[TravelRequest 校验]
     REQ --> TOOL[ToolRegistry: 三个本地模拟工具]
     TOOL --> AGENT[SimpleAgent + 本机 Ollama]
+    API -->|用户勾选时| WEB[Tavily 基础搜索]
+    WEB -->|来源摘要| AGENT
     AGENT --> CHECK[JSON 与景点 ID 校验]
     CHECK --> BUILD[确定性时间线与预算]
     BUILD --> UI
@@ -28,6 +31,8 @@ flowchart LR
 | 文件 | 作用 |
 |---|---|
 | `data.py` | 模拟城市、景点、酒店、餐饮与示意坐标 |
+| `popular_cities.py` | 更多目的地的离线景点名称目录；数值字段由 `data.py` 生成演示占位值 |
+| `research.py` | 可选 Tavily 搜索、来源校验与 1 小时进程内缓存 |
 | `planner.py` | 请求校验、模拟工具、模型选择、结果验证、时间线和预算 |
 | `server.py` | 只监听 `127.0.0.1:8765` 的本地 API 与静态文件服务 |
 | `index.html` / `style.css` / `app.js` | 表单、行程、示意图、编辑与导出 |
@@ -47,6 +52,8 @@ ollama pull qwen2.5:7b
 
 浏览器打开 <http://127.0.0.1:8765>。主要接口：`POST /api/plan` 首次生成；`POST /api/rebuild` 根据已选景点重新计算；`GET /api/health` 检查本地服务。测试命令：`.venv/bin/python -m pytest tests/test_travel_demo.py -q`（先安装 `.[dev]`）。
 
+联网模式需要额外执行 `.venv/bin/python -m pip install -e '.[search]'`，并在**本项目的** `.env` 中填写 `TAVILY_API_KEY=你的Key` 后重启服务。不要把 Key 发到聊天、提交到 GitHub 或写进前端代码。未勾选联网开关时不会请求 Tavily。按照 [Tavily 官方用量说明](https://docs.tavily.com/documentation/api-credits)，基础搜索每次消耗 1 个 API credit；价格和额度以官网实时信息为准。
+
 ## 边界
 
-这里的景点资料、酒店、天气、价格、位置和时间均为**模拟数据**；示意图不是地图，道路线和交通耗时没有计算。模型选择结果需要满足程序校验；失败会返回错误，不会把编造的景点呈现为事实。当前案例是单 Agent 工作流，没有实现第 13 章原项目的多 Agent 调度或真实地图接入。
+这里的景点目录、酒店、天气、价格、位置和时间均为**演示数据**；示意图不是地图，道路线和交通耗时没有计算。Tavily 是非结构化网络搜索，来源摘要只辅助选点，不能替代高德地图或景区官方的实时数据。模型选择结果需要满足程序校验；失败会返回错误，不会把编造的景点呈现为事实。当前案例是单 Agent 工作流，没有实现第 13 章原项目的多 Agent 调度或真实地图接入。
